@@ -24,9 +24,9 @@ const CFG = {
   NAME : "Lz",
   TITLE: "@Luozilong898300",
   SUB  : "随时在线，点一下直接找我",
-  CTA  : "点击联系我",
+  CTA  : "点我加微信",
 
-  TYPE : "link",
+  TYPE : "wechat",
   URL  : "https://gitee.com/Luozilong898300",
   WXID : "your_wechat_id",
   QR   : "qr.png"
@@ -125,7 +125,7 @@ h1{font-size:34px;line-height:1.15;font-weight:600;letter-spacing:.02em;
       <img id="qrimg" alt="微信二维码">
       <div class="qempty" id="qempty">把微信二维码<br>存成 qr.png 放进本目录</div>
     </div>
-    <div class="wxid">微信号：<b id="wxid"></b></div>
+    <div class="wxid" id="wxrow">微信号：<b id="wxid"></b></div>
     <div class="btns">
       <button id="copy">复制微信号</button>
       <button id="close">关闭</button>
@@ -159,6 +159,7 @@ h1{font-size:34px;line-height:1.15;font-weight:600;letter-spacing:.02em;
   $('kicker').textContent = CFG.TITLE;
   $('ctatext').textContent = CFG.CTA || ((CFG.TYPE === 'wechat') ? '扫码加我微信' : '点我直接聊天');
   $('wxid').textContent = CFG.WXID;
+  if (!CFG.WXID) { $('wxrow').style.display = 'none'; $('copy').style.display = 'none'; }
   document.title = CFG.NAME;
   document.querySelector('meta[property="og:title"]').setAttribute('content', CFG.NAME);
   document.querySelector('meta[property="og:description"]').setAttribute('content', CFG.SUB);
