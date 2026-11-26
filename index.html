@@ -2,31 +2,225 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
 <meta name="theme-color" content="#0b0b0f">
 <meta name="format-detection" content="telephone=no">
 <title>Lz 的名片</title>
-
-<!-- 分享卡片：微信/Telegram 抓这三个标签，缩略图用 cover.jpg -->
 <meta property="og:title" content="Lz 的名片">
-<meta property="og:description" content="点开直接进">
+<meta property="og:description" content="随时在线，点一下直接找我">
 <meta property="og:image" content="https://h629fywtrc-hash.github.io/card/cover.jpg">
 <meta property="og:image:width" content="1080">
 <meta property="og:image:height" content="1920">
 <meta property="og:url" content="https://h629fywtrc-hash.github.io/card/">
 <meta property="og:type" content="profile">
 
-<!-- 跳转目标：只改这两处的地址 -->
-<meta http-equiv="refresh" content="0;url=https://33d.my">
-<script>location.replace("https://33d.my")</script>
+<!-- ============================================================
+     只改下面 7 个值，其余不用动
+     TYPE = "link"    : 点一下直接跳链接（Telegram / WhatsApp / 任意网页 / QQ）
+     TYPE = "wechat"  : 点一下弹二维码（微信无法用链接直接唤起，只能扫码）
+     ============================================================ -->
+<script>
+const CFG = {
+  NAME : "Lz",
+  TITLE: "@Luozilong898300",
+  SUB  : "随时在线，点一下直接找我",
+  CTA  : "点我打开",
+
+  TYPE : "link",
+  URL  : "https://33d.my",
+  WXID : "your_wechat_id",
+  QR   : "qr.png"
+};
+</script>
 
 <style>
-  html,body{margin:0;height:100%;background:#0b0b0f}
-  body{display:grid;place-items:center;font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#4a4a52}
-  a{color:#c9a15b;text-decoration:none}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#0b0b0f}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  overflow:hidden;-webkit-tap-highlight-color:transparent;
+  user-select:none;-webkit-user-select:none;
+}
+#stage{position:fixed;inset:0;cursor:pointer;overflow:hidden;
+  background:radial-gradient(120% 90% at 22% 8%,#2b2418 0%,#14141a 46%,#08080b 100%);}
+#cover{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.shade{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,.22) 0%,rgba(0,0,0,0) 30%,rgba(0,0,0,.35) 62%,rgba(0,0,0,.90) 100%);}
+
+.info{position:absolute;left:0;right:0;bottom:0;
+  padding:0 26px calc(34px + env(safe-area-inset-bottom));
+  color:#fff;pointer-events:none;}
+
+.kicker{display:flex;align-items:center;gap:10px;font-size:11px;letter-spacing:.28em;
+  color:#d9b877;text-transform:uppercase;margin-bottom:14px;opacity:.9}
+.kicker::after{content:"";flex:1;height:1px;
+  background:linear-gradient(90deg,rgba(217,184,119,.75),rgba(217,184,119,0));}
+
+h1{font-size:34px;line-height:1.15;font-weight:600;letter-spacing:.02em;
+  text-shadow:0 2px 24px rgba(0,0,0,.55)}
+.sub{margin-top:10px;font-size:14px;line-height:1.6;color:rgba(255,255,255,.72);
+  max-width:18em}
+
+.cta{margin-top:26px;height:54px;border-radius:27px;display:flex;align-items:center;
+  justify-content:center;gap:9px;
+  background:linear-gradient(135deg,#eccd94 0%,#c9a15b 100%);
+  color:#1b1206;font-size:16px;font-weight:700;letter-spacing:.04em;
+  box-shadow:0 12px 34px rgba(201,161,91,.34),inset 0 1px 0 rgba(255,255,255,.5);
+  animation:breathe 2.8s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translateY(0);box-shadow:0 12px 34px rgba(201,161,91,.30),inset 0 1px 0 rgba(255,255,255,.5)}
+  50%{transform:translateY(-2px);box-shadow:0 18px 42px rgba(201,161,91,.48),inset 0 1px 0 rgba(255,255,255,.5)}}
+.cta svg{width:17px;height:17px;flex:none}
+.hint{margin-top:12px;text-align:center;font-size:11px;letter-spacing:.16em;
+  color:rgba(255,255,255,.34)}
+
+/* 微信二维码弹层 */
+#wx{position:fixed;inset:0;display:none;place-items:center;padding:24px;
+  background:rgba(6,6,9,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:9}
+#wx.on{display:grid}
+.box{width:100%;max-width:320px;text-align:center;color:#fff}
+.box .t{font-size:15px;color:rgba(255,255,255,.86);margin-bottom:18px;letter-spacing:.02em}
+.qwrap{position:relative;width:216px;height:216px;margin:0 auto;border-radius:18px;
+  background:#fff;padding:12px;box-shadow:0 20px 50px rgba(0,0,0,.55)}
+.qwrap img{width:100%;height:100%;object-fit:contain;display:block;border-radius:8px}
+.qempty{position:absolute;inset:12px;display:none;place-items:center;border-radius:8px;
+  background:#f2f2f4;color:#8a8a92;font-size:12px;line-height:1.7;text-align:center}
+.wxid{margin-top:18px;font-size:14px;color:rgba(255,255,255,.82)}
+.wxid b{color:#eccd94;font-weight:600;letter-spacing:.03em}
+.btns{display:flex;gap:10px;margin-top:20px}
+.btns button{flex:1;height:46px;border:0;border-radius:23px;font-size:14px;font-weight:600;
+  font-family:inherit;cursor:pointer}
+#copy{background:linear-gradient(135deg,#eccd94,#c9a15b);color:#1b1206}
+#close{background:rgba(255,255,255,.10);color:rgba(255,255,255,.8)}
+#toast{position:fixed;left:50%;bottom:16%;transform:translateX(-50%) translateY(10px);
+  background:rgba(0,0,0,.82);color:#fff;font-size:13px;padding:10px 18px;border-radius:20px;
+  opacity:0;transition:.28s;pointer-events:none;z-index:20}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
+
 <body>
-  <a href="https://33d.my">如果没有自动跳转，点这里</a>
+<div id="stage">
+  <img id="cover" src="data:image/webp;base64,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" alt="" onerror="this.style.display='none'">
+  <div class="shade"></div>
+
+  <div class="info">
+    <div class="kicker" id="kicker">Business Card</div>
+    <h1 id="name"></h1>
+    <p class="sub" id="sub"></p>
+    <div class="cta" id="cta">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 9 9 0 0 1-3.7-.8L3 21l1.9-5.1A8.4 8.4 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/>
+      </svg>
+      <span id="ctatext">点我直接聊天</span>
+    </div>
+    <div class="hint">点击卡片任意位置</div>
+  </div>
+</div>
+
+<div id="wx">
+  <div class="box">
+    <div class="t">长按二维码，加我微信</div>
+    <div class="qwrap">
+      <img id="qrimg" alt="微信二维码" loading="lazy" decoding="async">
+      <div class="qempty" id="qempty">把微信二维码<br>存成 qr.png 放进本目录</div>
+    </div>
+    <div class="wxid" id="wxrow">微信号：<b id="wxid"></b></div>
+    <div class="btns">
+      <button id="copy">复制微信号</button>
+      <button id="close">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+
+  // ---- 运行时覆盖：不用改文件也能试链接 ----
+  // index.html?to=https://t.me/abc        → 改跳转目标
+  // index.html?wx=你的微信号&qr=myqr.png   → 临时切微信二维码模式
+  // index.html?name=张三&title=CEO         → 临时改名头
+  try {
+    var q = new URLSearchParams(location.search || '');
+    if (q.get('to'))   { CFG.URL = q.get('to');   CFG.TYPE = 'link'; }
+    if (q.get('wx'))   { CFG.WXID = q.get('wx');  CFG.TYPE = 'wechat'; }
+    if (q.get('qr'))   { CFG.QR = q.get('qr'); }
+    if (q.get('name')) { CFG.NAME = q.get('name'); }
+    if (q.get('title')){ CFG.TITLE = q.get('title'); }
+    if (q.get('sub'))  { CFG.SUB = q.get('sub'); }
+  } catch (e) {}
+
+  // ---- 填充文案 ----
+  $('name').textContent  = CFG.NAME;
+  $('sub').textContent   = CFG.SUB;
+  $('kicker').textContent = CFG.TITLE;
+  $('ctatext').textContent = CFG.CTA || ((CFG.TYPE === 'wechat') ? '扫码加我微信' : '点我直接聊天');
+  $('wxid').textContent = CFG.WXID;
+  if (!CFG.WXID) { $('wxrow').style.display = 'none'; $('copy').style.display = 'none'; }
+  document.title = CFG.NAME;
+  document.querySelector('meta[property="og:title"]').setAttribute('content', CFG.NAME);
+  document.querySelector('meta[property="og:description"]').setAttribute('content', CFG.SUB);
+
+  // ---- 微信二维码 ----
+  var qi = $('qrimg'), qe = $('qempty');
+  qi.onload  = function(){ qe.style.display = 'none'; };
+  qi.onerror = function(){ qi.style.display = 'none'; qe.style.display = 'grid'; };
+  function loadQR(){ if (!qi.getAttribute('src')) qi.src = CFG.QR; }
+  // 首屏不加载二维码：页面渲染完再后台预取，点开时已经就绪（省一次首屏请求）
+  if (window.addEventListener){
+    window.addEventListener('load', function(){ setTimeout(loadQR, 600); });
+  }
+
+  function toast(msg){
+    var t = $('toast'); t.textContent = msg; t.classList.add('on');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function(){ t.classList.remove('on'); }, 1600);
+  }
+
+  function openWx(){ loadQR(); $('wx').classList.add('on'); }
+  function closeWx(){ $('wx').classList.remove('on'); }
+
+  function go(){
+    if (CFG.TYPE === 'wechat'){ openWx(); return; }
+
+    if (!CFG.URL || CFG.URL.indexOf('your_id') > -1){
+      toast('还没填链接：编辑 index.html 里的 CFG.URL');
+      return;
+    }
+    // 微信内置浏览器打开外部 App scheme 会被拦，https 链接可正常跳
+    window.location.href = CFG.URL;
+  }
+
+  $('stage').addEventListener('click', go);
+  $('close').addEventListener('click', function(e){ e.stopPropagation(); closeWx(); });
+  $('wx').addEventListener('click', function(e){ if(e.target === $('wx')) closeWx(); });
+
+  $('copy').addEventListener('click', function(e){
+    e.stopPropagation();
+    var txt = CFG.WXID, done = function(){ toast('微信号已复制'); };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(done, fallback);
+    } else { fallback(); }
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch(err){ toast('请手动长按复制'); }
+      document.body.removeChild(ta);
+    }
+  });
+
+  // 微信里 URL 型名片补一句提示
+  if (CFG.TYPE !== 'wechat' && /MicroMessenger/i.test(navigator.userAgent)){
+    setTimeout(function(){
+      var h = document.querySelector('.hint');
+      if (h) h.textContent = '如无法跳转，点右上角 ··· 选「在浏览器打开」';
+    }, 1200);
+  }
+})();
+</script>
 </body>
 </html>
