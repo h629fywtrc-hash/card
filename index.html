@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="theme-color" content="#0b0b0f">
+<meta name="format-detection" content="telephone=no">
+<title>名片</title>
+<meta property="og:title" content="名片">
+<meta property="og:description" content="点击卡片，直接开聊">
+<meta property="og:image" content="cover.jpg">
+<meta property="og:type" content="profile">
+
+<!-- ============================================================
+     只改下面 7 个值，其余不用动
+     TYPE = "link"    : 点一下直接跳链接（Telegram / WhatsApp / 任意网页 / QQ）
+     TYPE = "wechat"  : 点一下弹二维码（微信无法用链接直接唤起，只能扫码）
+     ============================================================ -->
+<script>
+const CFG = {
+  NAME : "你的名字",
+  TITLE: "职位 · 公司",
+  SUB  : "随时在线，点一下直接找我",
+
+  TYPE : "link",
+  URL  : "https://www.baidu.com",
+  WXID : "your_wechat_id",
+  QR   : "qr.png"
+};
+</script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#0b0b0f}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  overflow:hidden;-webkit-tap-highlight-color:transparent;
+  user-select:none;-webkit-user-select:none;
+}
+#stage{position:fixed;inset:0;cursor:pointer;overflow:hidden;
+  background:radial-gradient(120% 90% at 22% 8%,#2b2418 0%,#14141a 46%,#08080b 100%);}
+#cover{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.shade{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,.22) 0%,rgba(0,0,0,0) 30%,rgba(0,0,0,.35) 62%,rgba(0,0,0,.90) 100%);}
+
+.info{position:absolute;left:0;right:0;bottom:0;
+  padding:0 26px calc(34px + env(safe-area-inset-bottom));
+  color:#fff;pointer-events:none;}
+
+.kicker{display:flex;align-items:center;gap:10px;font-size:11px;letter-spacing:.28em;
+  color:#d9b877;text-transform:uppercase;margin-bottom:14px;opacity:.9}
+.kicker::after{content:"";flex:1;height:1px;
+  background:linear-gradient(90deg,rgba(217,184,119,.75),rgba(217,184,119,0));}
+
+h1{font-size:34px;line-height:1.15;font-weight:600;letter-spacing:.02em;
+  text-shadow:0 2px 24px rgba(0,0,0,.55)}
+.sub{margin-top:10px;font-size:14px;line-height:1.6;color:rgba(255,255,255,.72);
+  max-width:18em}
+
+.cta{margin-top:26px;height:54px;border-radius:27px;display:flex;align-items:center;
+  justify-content:center;gap:9px;
+  background:linear-gradient(135deg,#eccd94 0%,#c9a15b 100%);
+  color:#1b1206;font-size:16px;font-weight:700;letter-spacing:.04em;
+  box-shadow:0 12px 34px rgba(201,161,91,.34),inset 0 1px 0 rgba(255,255,255,.5);
+  animation:breathe 2.8s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translateY(0);box-shadow:0 12px 34px rgba(201,161,91,.30),inset 0 1px 0 rgba(255,255,255,.5)}
+  50%{transform:translateY(-2px);box-shadow:0 18px 42px rgba(201,161,91,.48),inset 0 1px 0 rgba(255,255,255,.5)}}
+.cta svg{width:17px;height:17px;flex:none}
+.hint{margin-top:12px;text-align:center;font-size:11px;letter-spacing:.16em;
+  color:rgba(255,255,255,.34)}
+
+/* 微信二维码弹层 */
+#wx{position:fixed;inset:0;display:none;place-items:center;padding:24px;
+  background:rgba(6,6,9,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:9}
+#wx.on{display:grid}
+.box{width:100%;max-width:320px;text-align:center;color:#fff}
+.box .t{font-size:15px;color:rgba(255,255,255,.86);margin-bottom:18px;letter-spacing:.02em}
+.qwrap{position:relative;width:216px;height:216px;margin:0 auto;border-radius:18px;
+  background:#fff;padding:12px;box-shadow:0 20px 50px rgba(0,0,0,.55)}
+.qwrap img{width:100%;height:100%;object-fit:contain;display:block;border-radius:8px}
+.qempty{position:absolute;inset:12px;display:grid;place-items:center;border-radius:8px;
+  background:#f2f2f4;color:#8a8a92;font-size:12px;line-height:1.7;text-align:center}
+.wxid{margin-top:18px;font-size:14px;color:rgba(255,255,255,.82)}
+.wxid b{color:#eccd94;font-weight:600;letter-spacing:.03em}
+.btns{display:flex;gap:10px;margin-top:20px}
+.btns button{flex:1;height:46px;border:0;border-radius:23px;font-size:14px;font-weight:600;
+  font-family:inherit;cursor:pointer}
+#copy{background:linear-gradient(135deg,#eccd94,#c9a15b);color:#1b1206}
+#close{background:rgba(255,255,255,.10);color:rgba(255,255,255,.8)}
+#toast{position:fixed;left:50%;bottom:16%;transform:translateX(-50%) translateY(10px);
+  background:rgba(0,0,0,.82);color:#fff;font-size:13px;padding:10px 18px;border-radius:20px;
+  opacity:0;transition:.28s;pointer-events:none;z-index:20}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+
+<body>
+<div id="stage">
+  <img id="cover" src="cover.jpg" alt="" onerror="this.style.display='none'">
+  <div class="shade"></div>
+
+  <div class="info">
+    <div class="kicker" id="kicker">Business Card</div>
+    <h1 id="name"></h1>
+    <p class="sub" id="sub"></p>
+    <div class="cta" id="cta">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 9 9 0 0 1-3.7-.8L3 21l1.9-5.1A8.4 8.4 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/>
+      </svg>
+      <span id="ctatext">点我直接聊天</span>
+    </div>
+    <div class="hint">点击卡片任意位置</div>
+  </div>
+</div>
+
+<div id="wx">
+  <div class="box">
+    <div class="t">长按二维码，加我微信</div>
+    <div class="qwrap">
+      <img id="qrimg" alt="微信二维码">
+      <div class="qempty" id="qempty">把微信二维码<br>存成 qr.png 放进本目录</div>
+    </div>
+    <div class="wxid">微信号：<b id="wxid"></b></div>
+    <div class="btns">
+      <button id="copy">复制微信号</button>
+      <button id="close">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+
+  // ---- 运行时覆盖：不用改文件也能试链接 ----
+  // index.html?to=https://t.me/abc        → 改跳转目标
+  // index.html?wx=你的微信号&qr=myqr.png   → 临时切微信二维码模式
+  // index.html?name=张三&title=CEO         → 临时改名头
+  try {
+    var q = new URLSearchParams(location.search || '');
+    if (q.get('to'))   { CFG.URL = q.get('to');   CFG.TYPE = 'link'; }
+    if (q.get('wx'))   { CFG.WXID = q.get('wx');  CFG.TYPE = 'wechat'; }
+    if (q.get('qr'))   { CFG.QR = q.get('qr'); }
+    if (q.get('name')) { CFG.NAME = q.get('name'); }
+    if (q.get('title')){ CFG.TITLE = q.get('title'); }
+    if (q.get('sub'))  { CFG.SUB = q.get('sub'); }
+  } catch (e) {}
+
+  // ---- 填充文案 ----
+  $('name').textContent  = CFG.NAME;
+  $('sub').textContent   = CFG.SUB;
+  $('kicker').textContent = CFG.TITLE;
+  $('ctatext').textContent = (CFG.TYPE === 'wechat') ? '扫码加我微信' : '点我直接聊天';
+  $('wxid').textContent = CFG.WXID;
+  document.title = CFG.NAME;
+  document.querySelector('meta[property="og:title"]').setAttribute('content', CFG.NAME);
+  document.querySelector('meta[property="og:description"]').setAttribute('content', CFG.SUB);
+
+  // ---- 微信二维码 ----
+  var qi = $('qrimg'), qe = $('qempty');
+  qi.onload  = function(){ qe.style.display = 'none'; };
+  qi.onerror = function(){ qi.style.display = 'none'; qe.style.display = 'grid'; };
+  qi.src = CFG.QR;
+
+  function toast(msg){
+    var t = $('toast'); t.textContent = msg; t.classList.add('on');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function(){ t.classList.remove('on'); }, 1600);
+  }
+
+  function openWx(){ $('wx').classList.add('on'); }
+  function closeWx(){ $('wx').classList.remove('on'); }
+
+  function go(){
+    if (CFG.TYPE === 'wechat'){ openWx(); return; }
+
+    if (!CFG.URL || CFG.URL.indexOf('your_id') > -1){
+      toast('还没填链接：编辑 index.html 里的 CFG.URL');
+      return;
+    }
+    // 微信内置浏览器打开外部 App scheme 会被拦，https 链接可正常跳
+    window.location.href = CFG.URL;
+  }
+
+  $('stage').addEventListener('click', go);
+  $('close').addEventListener('click', function(e){ e.stopPropagation(); closeWx(); });
+  $('wx').addEventListener('click', function(e){ if(e.target === $('wx')) closeWx(); });
+
+  $('copy').addEventListener('click', function(e){
+    e.stopPropagation();
+    var txt = CFG.WXID, done = function(){ toast('微信号已复制'); };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(done, fallback);
+    } else { fallback(); }
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch(err){ toast('请手动长按复制'); }
+      document.body.removeChild(ta);
+    }
+  });
+
+  // 微信里 URL 型名片补一句提示
+  if (CFG.TYPE !== 'wechat' && /MicroMessenger/i.test(navigator.userAgent)){
+    setTimeout(function(){
+      var h = document.querySelector('.hint');
+      if (h) h.textContent = '如无法跳转，点右上角 ··· 选「在浏览器打开」';
+    }, 1200);
+  }
+})();
+</script>
+</body>
+</html>
