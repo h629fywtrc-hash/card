@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
 <meta name="theme-color" content="#0b0b0f">
 <meta name="format-detection" content="telephone=no">
-<title>名片</title>
-<meta property="og:title" content="名片">
-<meta property="og:description" content="点击卡片，直接开聊">
+<title>Lz 的名片</title>
+<meta property="og:title" content="Lz 的名片">
+<meta property="og:description" content="随时在线，点一下直接找我">
 <meta property="og:image" content="https://h629fywtrc-hash.github.io/card/cover.jpg">
 <meta property="og:image:width" content="1080">
 <meta property="og:image:height" content="1920">
@@ -21,12 +21,13 @@
      ============================================================ -->
 <script>
 const CFG = {
-  NAME : "你的名字",
-  TITLE: "职位 · 公司",
+  NAME : "Lz",
+  TITLE: "@Luozilong898300",
   SUB  : "随时在线，点一下直接找我",
+  CTA  : "点击联系我",
 
   TYPE : "link",
-  URL  : "https://www.baidu.com",
+  URL  : "https://gitee.com/Luozilong898300",
   WXID : "your_wechat_id",
   QR   : "qr.png"
 };
@@ -156,7 +157,7 @@ h1{font-size:34px;line-height:1.15;font-weight:600;letter-spacing:.02em;
   $('name').textContent  = CFG.NAME;
   $('sub').textContent   = CFG.SUB;
   $('kicker').textContent = CFG.TITLE;
-  $('ctatext').textContent = (CFG.TYPE === 'wechat') ? '扫码加我微信' : '点我直接聊天';
+  $('ctatext').textContent = CFG.CTA || ((CFG.TYPE === 'wechat') ? '扫码加我微信' : '点我直接聊天');
   $('wxid').textContent = CFG.WXID;
   document.title = CFG.NAME;
   document.querySelector('meta[property="og:title"]').setAttribute('content', CFG.NAME);
